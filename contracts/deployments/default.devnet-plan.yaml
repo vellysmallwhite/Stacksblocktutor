@@ -13,3 +13,6 @@ plan:
             expected-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
             cost: 1330
             path: contracts/hello-stacks.clar
+            anchor-block-only: true
+            clarity-version: 1
+      epoch: "2.05"

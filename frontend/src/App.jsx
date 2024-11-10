@@ -1,125 +1,108 @@
-import { useEffect, useState } from "react";
-import { AppConfig, UserSession, showConnect, openContractCall } from "@stacks/connect";
-import { StacksMocknet } from "@stacks/network";
-import { stringUtf8CV } from '@stacks/transactions'
+import React, { useState } from 'react';
+import { Shield, CreditCard, Star, Calendar } from 'lucide-react';
 
-function App() {
-  const [message, setMessage] = useState("");
-  const [transactionId, setTransactionId] = useState("");
-  const [currentMessage, setCurrentMessage] = useState("");
-  const [userData, setUserData] = useState(undefined);
+const Navigation = ({ setCurrentPage }) => (
+  <nav className="bg-gradient-to-r from-indigo-600 to-purple-600 p-4">
+    <div className="container mx-auto flex justify-between items-center">
+      <div className="text-white font-bold text-2xl flex items-center">
+        <Shield className="mr-2" /> BlockTutor
+      </div>
+      <div className="space-x-6">
+        {['home', 'book', 'reviews', 'payment', 'about'].map((page) => (
+          <button
+            key={page}
+            onClick={() => setCurrentPage(page)}
+            className="text-white hover:text-indigo-200 transition-colors font-medium"
+          >
+            {page.charAt(0).toUpperCase() + page.slice(1)}
+          </button>
+        ))}
+      </div>
+    </div>
+  </nav>
+);
 
-  const appConfig = new AppConfig(["store_write"]);
-  const userSession = new UserSession({ appConfig });
-  const appDetails = {
-    name: "Hello Stacks",
-    icon: "https://freesvg.org/img/1541103084.png",
-  };
+const HomePage = () => (
+  <div className="p-8 text-center">
+    <h1 className="text-4xl font-bold mb-4 text-indigo-600">
+      Welcome to BlockTutor
+    </h1>
+    <p className="text-xl text-gray-600 mb-8">
+      Blockchain-verified online tutoring
+    </p>
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      {[
+        { icon: Shield, title: 'Verified Tutors', desc: 'Blockchain-verified professionals' },
+        { icon: CreditCard, title: 'Secure Payments', desc: 'Cryptocurrency payments' },
+        { icon: Star, title: 'Verified Reviews', desc: 'Transparent review system' }
+      ].map(({ icon: Icon, title, desc }) => (
+        <div key={title} className="p-6 bg-white rounded-lg shadow-lg">
+          <div className="flex items-center justify-center mb-4">
+            <Icon className="text-indigo-600" />
+          </div>
+          <h3 className="text-xl font-bold text-indigo-600 mb-2">{title}</h3>
+          <p className="text-gray-600">{desc}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+);
 
-  useEffect(() => {
-    if (userSession.isSignInPending()) {
-      userSession.handlePendingSignIn().then((userData) => {
-        setUserData(userData);
-      });
-    } else if (userSession.isUserSignedIn()) {
-      setUserData(userSession.loadUserData());
-    }
-  }, []);
+const BookingPage = () => {
+  const [formData, setFormData] = useState({ subject: '', time: '' });
 
-  console.log(userData);
-
-  const connectWallet = () => {
-    showConnect({
-      appDetails,
-      onFinish: () => window.location.reload(),
-      userSession,
-    });
-  };
-
-  const handleMessageChange = (e) => {
-    setMessage(e.target.value);
-  };
-
-  const submitMessage = async (e) => {
-    e.preventDefault()
-
-    const network = new StacksMocknet()
-
-    const options = {
-      contractAddress: 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM',
-      contractName: 'hello-stacks',
-      functionName: 'write-message',
-      functionArgs: [
-        stringUtf8CV(message),
-      ],
-      network,
-      appDetails,
-      onFinish: ({ txId }) => console.log(txId)
-    }
-
-    await openContractCall(options)
-  };
-
-  const handleTransactionChange = (e) => {
-    setTransactionId(e.target.value);
-  };
-
-  const retrieveMessage = async () => {
-    const retrievedMessage = await fetch('http://localhost:3999/extended/v1/tx/events?' + new URLSearchParams({
-        tx_id: transactionId
-    }))
-    const responseJson = await retrievedMessage.json()
-    setCurrentMessage(responseJson.events[0].contract_log.value.repr)
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    console.log('Booking:', formData);
   };
 
   return (
-    <div className="flex flex-col justify-center items-center h-screen gap-8">
-      {!userData && (
-        <button
-          className="p-4 bg-indigo-500 rounded text-white"
-          onClick={connectWallet}
-        >
-          Connect Wallet
-        </button>
-      )}
-      <h1 className="text-6xl font-black">Hello Stacks</h1>
-      {userData && (
-        <div className="flex gap-4">
-          <input
-            className="p-4 border border-indigo-500 rounded"
-            placeholder="Write message here..."
-            onChange={handleMessageChange}
-            value={message}
-          />
-          <button
-            className="p-4 bg-indigo-500 rounded text-white"
-            onClick={submitMessage}
+    <div className="p-8 max-w-md mx-auto">
+      <h2 className="text-3xl font-bold mb-6 text-indigo-600">Book a Lesson</h2>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div>
+          <label className="block text-gray-700 mb-2">Subject</label>
+          <select
+            value={formData.subject}
+            onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+            className="w-full p-2 border rounded"
           >
-            Submit New Message
-          </button>
+            <option value="">Select Subject</option>
+            {['Mathematics', 'Science', 'English'].map(subject => (
+              <option key={subject} value={subject.toLowerCase()}>{subject}</option>
+            ))}
+          </select>
         </div>
-      )}
-      <div className="flex gap-4">
-        <input
-          className="p-4 border border-indigo-500 rounded"
-          placeholder="Paste transaction ID to look up message"
-          onChange={handleTransactionChange}
-          value={transactionId}
-        />
         <button
-          className="p-4 bg-indigo-500 rounded text-white"
-          onClick={retrieveMessage}
+          type="submit"
+          className="w-full bg-indigo-600 text-white p-3 rounded-lg hover:bg-indigo-700"
         >
-          Retrieve Message
+          Book Session
         </button>
-      </div>
-      {currentMessage.length > 0 ? (
-        <p className="text-2xl">{currentMessage}</p>
-      ) : (
-        ""
-      )}
+      </form>
     </div>
   );
-}
+};
+
+const App = () => {
+  const [currentPage, setCurrentPage] = useState('home');
+
+  const pages = {
+    home: <HomePage />,
+    book: <BookingPage />,
+    reviews: <div className="p-8">Reviews Page</div>,
+    payment: <div className="p-8">Payment Page</div>,
+    about: <div className="p-8">About Page</div>
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Navigation setCurrentPage={setCurrentPage} />
+      <main className="container mx-auto">
+        {pages[currentPage]}
+      </main>
+    </div>
+  );
+};
 
 export default App;
